@@ -143,12 +143,12 @@ namespace viewer.Controllers
                 // an event grid notiification.                        
                 var details = JsonConvert.DeserializeObject<GridEvent<dynamic>>(e.ToString());
 
-                if(details.EventType == "Microsoft.Storage.BlobCreated")
+                if(details.EventType == "Microsoft.Storage.BlobCreated" && _connection.HasAuthenticated)
                 {
                     await this._hubContext.Clients.All.SendAsync(
                         "gridupdate",
                         details.Id,
-                        "test",
+                        "True",
                         details.Subject,
                         details.EventTime.ToLongTimeString(),
                         e.ToString());
