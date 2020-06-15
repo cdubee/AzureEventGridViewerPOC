@@ -70,6 +70,7 @@ namespace viewer.Controllers
                 // a subscription validation request. 
                 if (EventTypeSubcriptionValidation)
                 {
+                    Console.WriteLine("EventTypeSubcriptionValidation");
                     return await HandleValidation(jsonContent);
                 }
                 else if (EventTypeNotification)
