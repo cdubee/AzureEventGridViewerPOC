@@ -13,6 +13,11 @@ using Microsoft.AspNetCore.Mvc;
 using viewer.Hubs;
 using viewer.Models;
 
+// https://www.nuget.org/packages/Microsoft.VisualStudio.Services.InteractiveClient/
+// https://www.nuget.org/packages/Microsoft.VisualStudio.Services.Client/
+using Microsoft.VisualStudio.Services.Common;
+using Microsoft.VisualStudio.Services.WebApi;
+
 namespace viewer.Controllers
 {
     [Route("api/[controller]")]
@@ -30,6 +35,8 @@ namespace viewer.Controllers
 
         private readonly IHubContext<GridEventsHub> _hubContext;
 
+        private VssConnection _connection;
+
         #endregion
 
         #region Constructors
@@ -37,6 +44,7 @@ namespace viewer.Controllers
         public UpdatesController(IHubContext<GridEventsHub> gridEventsHubContext)
         {
             this._hubContext = gridEventsHubContext;
+            InitAzureDevOps();
         }
 
         #endregion
@@ -70,7 +78,6 @@ namespace viewer.Controllers
                 // a subscription validation request. 
                 if (EventTypeSubcriptionValidation)
                 {
-                    Console.WriteLine("EventTypeSubcriptionValidation");
                     return await HandleValidation(jsonContent);
                 }
                 else if (EventTypeNotification)
@@ -82,6 +89,8 @@ namespace viewer.Controllers
                         return await HandleCloudEvent(jsonContent);
                     }
 
+
+
                     return await HandleGridEvents(jsonContent);
                 }
 
@@ -92,6 +101,18 @@ namespace viewer.Controllers
         #endregion
 
         #region Private Methods
+
+        async void InitAzureDevOps()
+        {
+            Uri _uri = new Uri("https://dev.azure.com/chdurham2020/");
+            string envPAT = Environment.GetEnvironmentVariable("PAT");
+
+            var creds = new VssBasicCredential(string.Empty, envPAT);
+
+            _connection = new VssConnection(_uri, creds);
+            await _connection.ConnectAsync();
+        }
+
 
         private async Task<JsonResult> HandleValidation(string jsonContent)
         {
@@ -123,14 +144,31 @@ namespace viewer.Controllers
                 // Invoke a method on the clients for 
                 // an event grid notiification.                        
                 var details = JsonConvert.DeserializeObject<GridEvent<dynamic>>(e.ToString());
-                await this._hubContext.Clients.All.SendAsync(
-                    "gridupdate",
-                    details.Id,
-                    details.EventType,
-                    details.Subject,
-                    details.EventTime.ToLongTimeString(),
-                    e.ToString());
+
+                if(details.EventType == "Microsoft.Storage.BlobCreated")
+                {
+                    await this._hubContext.Clients.All.SendAsync(
+                        "gridupdate",
+                        "Custom ID",
+                        details.EventType,
+                        details.Subject,
+                        details.EventTime.ToLongTimeString(),
+                        e.ToString());
+                }
+                else
+                {
+                    await this._hubContext.Clients.All.SendAsync(
+                        "gridupdate",
+                        details.Id,
+                        details.EventType,
+                        details.Subject,
+                        details.EventTime.ToLongTimeString(),
+                        e.ToString());
+                }
+
+
             }
+
 
             return Ok();
         }
