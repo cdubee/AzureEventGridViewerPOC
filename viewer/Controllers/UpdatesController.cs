@@ -13,8 +13,6 @@ using Microsoft.AspNetCore.Mvc;
 using viewer.Hubs;
 using viewer.Models;
 
-// https://www.nuget.org/packages/Microsoft.VisualStudio.Services.InteractiveClient/
-// https://www.nuget.org/packages/Microsoft.VisualStudio.Services.Client/
 using Microsoft.VisualStudio.Services.Common;
 using Microsoft.VisualStudio.Services.WebApi;
 
@@ -149,8 +147,8 @@ namespace viewer.Controllers
                 {
                     await this._hubContext.Clients.All.SendAsync(
                         "gridupdate",
-                        "Custom ID",
-                        details.EventType,
+                        details.Id,
+                        "test",
                         details.Subject,
                         details.EventTime.ToLongTimeString(),
                         e.ToString());
