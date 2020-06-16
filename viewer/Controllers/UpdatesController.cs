@@ -44,7 +44,7 @@ namespace viewer.Controllers
         public UpdatesController(IHubContext<GridEventsHub> gridEventsHubContext)
         {
             this._hubContext = gridEventsHubContext;
-            //InitAzureDevOps();
+            InitAzureDevOps();
         }
 
         #endregion
@@ -106,12 +106,11 @@ namespace viewer.Controllers
 
         async void InitAzureDevOps()
         {
-            Uri _uri = new Uri("https://dev.azure.com/chdurham2020/");
-            string envPAT = Environment.GetEnvironmentVariable("PAT");
+            var collectionUri = "https://dev.azure.com/chdurham2020/";
+            string PAT = Environment.GetEnvironmentVariable("PAT");
 
-            var creds = new VssBasicCredential(string.Empty, envPAT);
-
-            _connection = new VssConnection(_uri, creds);
+            // Create connection
+            _connection = new VssConnection(new Uri(collectionUri), new VssBasicCredential(string.Empty, PAT));
             await _connection.ConnectAsync();
         }
 
