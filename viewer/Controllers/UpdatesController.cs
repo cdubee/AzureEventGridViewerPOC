@@ -15,6 +15,8 @@ using viewer.Models;
 
 using Microsoft.VisualStudio.Services.Common;
 using Microsoft.VisualStudio.Services.WebApi;
+using Microsoft.TeamFoundation.Build.WebApi;
+using Microsoft.TeamFoundation.Core.WebApi;
 
 namespace viewer.Controllers
 {
@@ -42,7 +44,7 @@ namespace viewer.Controllers
         public UpdatesController(IHubContext<GridEventsHub> gridEventsHubContext)
         {
             this._hubContext = gridEventsHubContext;
-            InitAzureDevOps();
+            //InitAzureDevOps();
         }
 
         #endregion
@@ -87,7 +89,9 @@ namespace viewer.Controllers
                         return await HandleCloudEvent(jsonContent);
                     }
 
+                    // We'll kick off build here to test
 
+                    SampleBuildREST();
 
                     return await HandleGridEvents(jsonContent);
                 }
@@ -109,6 +113,30 @@ namespace viewer.Controllers
 
             _connection = new VssConnection(_uri, creds);
             await _connection.ConnectAsync();
+        }
+
+        private void SampleBuildREST()
+        {
+            BuildHttpClient buildClient = _connection.GetClient<BuildHttpClient>();
+            ProjectHttpClient projectClient = _connection.GetClient<ProjectHttpClient>();
+
+            var teamProjectName = "JSK-VM";
+            var buildDefId = 23;
+
+            var buildDefinition = buildClient.GetDefinitionAsync(teamProjectName, buildDefId).Result;
+            Console.WriteLine(buildDefinition.Name);
+
+            var teamProject = projectClient.GetProject(teamProjectName).Result;
+            Console.WriteLine(projectClient.BaseAddress);
+
+            try
+            {
+                buildClient.QueueBuildAsync(new Build() { Definition = buildDefinition, Project = teamProject, SourceBranch = "refs/heads/v0.4.1branch" }).Wait();
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine(e.Message);
+            }
         }
 
 
